@@ -123,6 +123,8 @@ public class PedidoDTO {
 
     public static class LineProduct {
         private int id;
+        @JsonProperty("product_id")
+        private int productID;
         private String name;
         private int quantity;
 
@@ -149,6 +151,9 @@ public class PedidoDTO {
         public void setQuantity(int quantity) {
             this.quantity = quantity;
         }
+
+        public int getProductID() { return productID; }
+        public void setProductID(int id) { this.productID = id; }
 
     }
 }

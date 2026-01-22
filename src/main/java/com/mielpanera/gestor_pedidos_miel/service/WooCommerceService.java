@@ -31,7 +31,7 @@ public class WooCommerceService {
     public WooCommerceService(RestTemplateBuilder builder, ObjectMapper mapper) {
         // Validación de que las variables de entorno están propiamente configuradas
         if (CONSUMER_KEY == null || CONSUMER_SECRET == null) {
-            throw new IllegalStateException("FATAL: Las variables de entorno WOO_CONSUMER_KEY o WOO_CONSUMER_SECRET no están configuradas.");
+            throw new IllegalStateException("FATAL: Las variables de entorno no están configuradas.");
         }
 
         this.restTemplate = builder.build();
@@ -165,14 +165,10 @@ public class WooCommerceService {
     }
 
     public void addProductsInObservations(PedidoDTO order) {
-        List<PedidoDTO.LineProduct> productsList = order.getLineItems();
 
-        String productsAddNote = order.getCustomerNote() + "\nProductos pedidos:\n" ;
-        for (PedidoDTO.LineProduct line: productsList) {
-            productsAddNote += line.getName() + " -- Cantidad: " + line.getQuantity() + "\n";
-        }
+        String productsAddNote = order.getCustomerNote() + "\n" + productLineParser(order);
+
         System.out.println(productsAddNote);
-        order.setCustomerNote(productsAddNote);
 
         String url = STORE_URL + "/wp-json/wc/v3/orders/" + order.getId();
 
@@ -198,10 +194,46 @@ public class WooCommerceService {
         List<PedidoDTO.LineProduct> products = order.getLineItems();
         String noteParsed = "";
         for (PedidoDTO.LineProduct product: products) {
-            if (product.getName().equals("Miel")) {
-
+            if (product.getProductID() == 48) {
+                noteParsed += product.getQuantity() + "Bos ";
+            } else if (product.getProductID() == 50) {
+                noteParsed += product.getQuantity() + "Br ";
+            } else if (product.getProductID() == 61) {
+                noteParsed += product.getQuantity() + "x(3TL-3Bos) ";
+            }else if (product.getProductID() == 62) {
+                noteParsed += product.getQuantity() + "x(6Br) ";
+            } else if (product.getProductID() == 63) {
+                noteParsed += product.getQuantity() + "x(6Bos) ";
+            } else if (product.getProductID() == 143) {
+                noteParsed += product.getQuantity() + "Tintu ";
+            } else if (product.getProductID() == 145) {
+                noteParsed += product.getQuantity() + "x(3Bos-3Br) ";
+            } else if (product.getProductID() == 146) {
+                noteParsed += product.getQuantity() + "Polen ";
+            }else if (product.getProductID() == 384) {
+                noteParsed += product.getQuantity() + "Palito ";
+            } else if (product.getProductID() == 242) {
+                noteParsed += product.getQuantity() + "TL ";
+            } else if (product.getProductID() == 331) {
+                noteParsed += product.getQuantity() + "Cant ";
+            } else if (product.getProductID() == 339) {
+                noteParsed += product.getQuantity() + "x(6Cant) ";
+            } else if (product.getProductID() == 374) {
+                noteParsed += product.getQuantity() + "x(6TL) ";
+            } else if (product.getProductID() == 393) {
+                noteParsed += product.getQuantity() + "x(2Br-2Bos-2Cant) ";
+            } else if (product.getProductID() == 1190) {
+                noteParsed += product.getQuantity() + "x(2Br-2Bos-2TL) ";
+            } else if (product.getProductID() == 1861) {
+                noteParsed += product.getQuantity() + "PropoleoCrudo ";
+            } else if (product.getProductID() == 1863) {
+                noteParsed += product.getQuantity() + "Cera ";
+            } else if (product.getProductID() == 1865) {
+                noteParsed += product.getQuantity() + "Cesta ";
             }
+
         }
+
         return noteParsed;
     }
 
