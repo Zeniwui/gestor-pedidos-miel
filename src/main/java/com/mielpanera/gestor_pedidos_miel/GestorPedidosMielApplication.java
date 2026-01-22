@@ -23,7 +23,7 @@ public class GestorPedidosMielApplication {
 	public CommandLineRunner demo(WooCommerceService wooService, CorreosScraperService correosScraperService, TelegramService telegramService) {
 		return (args) -> {
 
-			List<PedidoDTO> ordersProcessing = wooService.obtenerPedidos("processing");
+			List<PedidoDTO> ordersProcessing = wooService.obtenerPedidos("failed");
 			for (PedidoDTO order: ordersProcessing) {
 				if (order.getId() == 2988) {
 					wooService.addProductsInObservations(order);

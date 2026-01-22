@@ -191,9 +191,41 @@ public class WooCommerceService {
     }
 
     public String productLineParser(PedidoDTO order) {
-        List<PedidoDTO.LineProduct> products = order.getLineItems();
-        String noteParsed = "";
-        for (PedidoDTO.LineProduct product: products) {
+
+        Map<Integer, String> PRODUCT_LABELS = Map.ofEntries(
+                Map.entry(48, "Bos "),
+                Map.entry(50, "Br "),
+                Map.entry(61, "x(3TL-3Bos) "),
+                Map.entry(62, "x(6Br) "),
+                Map.entry(63, "x(6Bos) "),
+                Map.entry(143, "Tintu "),
+                Map.entry(145, "x(3Bos-3Br) "),
+                Map.entry(146, "Polen "),
+                Map.entry(242, "TL "),
+                Map.entry(331, "Cant "),
+                Map.entry(339, "x(6Cant) "),
+                Map.entry(374, "x(6TL) "),
+                Map.entry(384, "Palito "),
+                Map.entry(393, "x(2Br-2Bos-2Cant) "),
+                Map.entry(1190, "x(2Br-2Bos-2TL) "),
+                Map.entry(1861, "PropoleoCrudo "),
+                Map.entry(1863, "Cera "),
+                Map.entry(1865, "Cesta ")
+        );
+
+
+        StringBuilder noteParsed = new StringBuilder();
+
+        for (PedidoDTO.LineProduct product : order.getLineItems()) {
+            String label = PRODUCT_LABELS.get(product.getProductID());
+
+            if (label != null) {
+                noteParsed.append(product.getQuantity())
+                        .append(label);
+            }
+        }
+
+  /*      for (PedidoDTO.LineProduct product: products) {
             if (product.getProductID() == 48) {
                 noteParsed += product.getQuantity() + "Bos ";
             } else if (product.getProductID() == 50) {
@@ -232,9 +264,9 @@ public class WooCommerceService {
                 noteParsed += product.getQuantity() + "Cesta ";
             }
 
-        }
+        }*/
 
-        return noteParsed;
+        return noteParsed.toString();
     }
 
 }
