@@ -1,5 +1,7 @@
 package com.mielpanera.gestor_pedidos_miel.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mielpanera.gestor_pedidos_miel.dto.PedidoDTO;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.core.ParameterizedTypeReference;
@@ -20,18 +22,20 @@ import java.util.Map;
 public class WooCommerceService {
 
     private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper;
 
     private final String STORE_URL = System.getenv("STORE_URL");
     private final String CONSUMER_KEY = System.getenv("WOO_CONSUMER_KEY");
     private final String CONSUMER_SECRET = System.getenv("WOO_CONSUMER_SECRET");
 
-    public WooCommerceService(RestTemplateBuilder builder) {
+    public WooCommerceService(RestTemplateBuilder builder, ObjectMapper mapper) {
         // Validación de que las variables de entorno están propiamente configuradas
         if (CONSUMER_KEY == null || CONSUMER_SECRET == null) {
             throw new IllegalStateException("FATAL: Las variables de entorno WOO_CONSUMER_KEY o WOO_CONSUMER_SECRET no están configuradas.");
         }
 
         this.restTemplate = builder.build();
+        this.objectMapper = mapper;
     }
 
     public List<PedidoDTO> obtenerPedidos(String status) {
@@ -158,6 +162,47 @@ public class WooCommerceService {
             System.err.println("Error al añadir nota al pedido " + idOrder + ": " + e.getMessage());
             // Decidimos no lanzar excepción aquí para no interrumpir el flujo principal si la nota falla
         }
+    }
+
+    public void addProductsInObservations(PedidoDTO order) {
+        List<PedidoDTO.LineProduct> productsList = order.getLineItems();
+
+        String productsAddNote = order.getCustomerNote() + "\nProductos pedidos:\n" ;
+        for (PedidoDTO.LineProduct line: productsList) {
+            productsAddNote += line.getName() + " -- Cantidad: " + line.getQuantity() + "\n";
+        }
+        System.out.println(productsAddNote);
+        order.setCustomerNote(productsAddNote);
+
+        String url = STORE_URL + "/wp-json/wc/v3/orders/" + order.getId();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBasicAuth(CONSUMER_KEY, CONSUMER_SECRET);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        Map<String, Object> noteData = new HashMap<>();
+        noteData.put("customer_note", productsAddNote);
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(noteData, headers);
+
+        try {
+            restTemplate.postForObject(url, entity, Map.class);
+            System.out.println("Nota añadida correctamente al pedido " + order.getId());
+
+        } catch (Exception e) {
+            System.err.println("Error al añadir nota al pedido " + order.getId() + ": " + e.getMessage());
+        }
+    }
+
+    public String productLineParser(PedidoDTO order) {
+        List<PedidoDTO.LineProduct> products = order.getLineItems();
+        String noteParsed = "";
+        for (PedidoDTO.LineProduct product: products) {
+            if (product.getName().equals("Miel")) {
+
+            }
+        }
+        return noteParsed;
     }
 
 }

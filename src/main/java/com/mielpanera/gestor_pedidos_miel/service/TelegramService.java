@@ -44,6 +44,31 @@ public class TelegramService {
         enviarMensajeTelegram(mensajeTelegram);
     }
 
+    public void notificarPedidoDisposicion(PedidoDTO pedido) {
+        String phone = pedido.getBilling().getPhoneNumber();
+        String nombre = pedido.getBilling().getFirstName();
+
+        String telefonoLimpio = limpiarTelefono(phone);
+
+        String correosLink = "https://www.correos.es/es/es/herramientas/localizador/envios/detalle?tracking-number=" +
+                pedido.getTrackingNumber();
+
+        String mensajeCliente = "¡Hola " + nombre + "! 📦 Desde Correos nos informan que tienen tu pedido de Miel Panera para recoger en la oficina 🍯" +
+                "\nDesde este link puedes encontrar toda la información relacionada con tu pedido:\n" +
+                correosLink;
+
+        String waLink = "https://wa.me/" + telefonoLimpio + "?text=" +
+                URLEncoder.encode(mensajeCliente, StandardCharsets.UTF_8);
+
+        String mensajeTelegram = "<b>📦 PEDIDO #" + pedido.getId() + " A DISPOSICIÓN DEL DESTINATARIO</b>\n" +
+                "Cliente: " + nombre + "\n" +
+                "Estado: A disposición del destinatario\n\n" +
+                "👇 <b>Pulsa aquí para avisar al cliente:</b>\n" +
+                "<a href=\"" + waLink + "\">📲 Enviar WhatsApp</a>";
+
+        enviarMensajeTelegram(mensajeTelegram);
+    }
+
     public void enviarMensajeTelegram(String mensajeHtml) {
         try {
             String url = "https://api.telegram.org/bot" + telegramToken + "/sendMessage";

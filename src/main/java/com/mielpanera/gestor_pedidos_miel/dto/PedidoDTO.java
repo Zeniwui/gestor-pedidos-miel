@@ -17,6 +17,18 @@ public class PedidoDTO {
     private Billing billing;
     @JsonProperty("correos_tracking_number")
     private String trackingNumber;
+    @JsonProperty("customer_note")
+    private String customerNote;
+    @JsonProperty("line_items")
+    private List<LineProduct> lineItems;
+
+    public List<LineProduct> getLineItems() {
+        return lineItems;
+    }
+
+    public void setLineItems(List<LineProduct> lineItems) {
+        this.lineItems = lineItems;
+    }
 
     // CONSTRUCTOR VACÍO (Necesario para Spring)
     public PedidoDTO() {}
@@ -58,6 +70,9 @@ public class PedidoDTO {
 
     public String getTrackingNumber() { return trackingNumber; }
     public void setTrackingNumber(String trackingNumber) { this.trackingNumber = trackingNumber; }
+
+    public String getCustomerNote() { return customerNote; }
+    public void setCustomerNote(String note) { this.customerNote = note; }
 
     @Override
     public String toString() {
@@ -104,5 +119,36 @@ public class PedidoDTO {
             String apellido = (lastName != null) ? lastName : "";
             return (nombre + " " + apellido).trim();
         }
+    }
+
+    public static class LineProduct {
+        private int id;
+        private String name;
+        private int quantity;
+
+        public int getId() {
+            return id;
+        }
+
+        public void setId(int id) {
+            this.id = id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public int getQuantity() {
+            return quantity;
+        }
+
+        public void setQuantity(int quantity) {
+            this.quantity = quantity;
+        }
+
     }
 }

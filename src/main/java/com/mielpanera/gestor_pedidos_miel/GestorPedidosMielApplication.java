@@ -23,30 +23,35 @@ public class GestorPedidosMielApplication {
 	public CommandLineRunner demo(WooCommerceService wooService, CorreosScraperService correosScraperService, TelegramService telegramService) {
 		return (args) -> {
 
-			String statusCorreos1 = correosScraperService.obtenerEstadoActual("PQ6PCB9800014370148993C");
-			System.out.println("PQ6PCB9800014370148993C" + "; estado: " + statusCorreos1);
-			if (statusCorreos1.contains("disposición")) {
-				System.out.println("jsadlkfjsajdlñjfl");
-			}
-
-
-/*			System.out.println("--- INICIANDO TEST DE CONEXIÓN ---");
-			// List<PedidoDTO> orders = wooService.obtenerPedidos("prepared-cocex");
-			List<PedidoDTO> orders = wooService.obtenerPedidos("processing");
-			System.out.println("--- FIN DE TEST ---");
-
-			for (PedidoDTO order: orders) {
-				*//*
-				String statusReal = correosScraperService.obtenerEstadoActual(order.getTrackingNumber());
-				System.out.println(order.getBilling().getNombreCompleto() + ", status: " + statusReal);
-				 *//*
-				if (order.getId() == 2973) {
-					telegramService.notificarPedidoEntregado(order);
+			List<PedidoDTO> ordersProcessing = wooService.obtenerPedidos("processing");
+			for (PedidoDTO order: ordersProcessing) {
+				if (order.getId() == 2988) {
+					wooService.addProductsInObservations(order);
+					break;
 				}
 			}
 
+/*			System.out.println("--- INICIANDO TEST DE CONEXIÓN ---");
+			// List<PedidoDTO> orders = wooService.obtenerPedidos("prepared-cocex");
+			List<PedidoDTO> ordersPreparedCocex = wooService.obtenerPedidos("prepared-cocex");
+			System.out.println("--- FIN DE TEST ---");
 
-			System.out.println("--- PRUEBA CORREOS ---");
+			for (PedidoDTO order: ordersPreparedCocex) {
+
+				String statusReal = correosScraperService.obtenerEstadoActual(order.getTrackingNumber());
+
+				if (statusReal.contains("disposición")) {
+					telegramService.notificarPedidoDisposicion(order);
+				}
+			}
+
+			List<PedidoDTO> ordersProcessing = wooService.obtenerPedidos("processing");
+			for (PedidoDTO order: ordersProcessing) {
+
+			}*/
+
+
+/*			System.out.println("--- PRUEBA CORREOS ---");
 			String trackingCode;
 			for (PedidoDTO order: orders) {
 				trackingCode = order.getTrackingNumber();
