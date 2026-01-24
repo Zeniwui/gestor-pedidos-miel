@@ -1,6 +1,6 @@
 package com.mielpanera.gestor_pedidos_miel.service;
 
-import com.mielpanera.gestor_pedidos_miel.dto.PedidoDTO;
+import com.mielpanera.gestor_pedidos_miel.model.PedidoDTO;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;

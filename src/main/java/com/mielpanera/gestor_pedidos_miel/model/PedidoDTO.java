@@ -1,4 +1,4 @@
-package com.mielpanera.gestor_pedidos_miel.dto;
+package com.mielpanera.gestor_pedidos_miel.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;

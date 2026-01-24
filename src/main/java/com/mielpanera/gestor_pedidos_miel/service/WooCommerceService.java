@@ -1,8 +1,7 @@
 package com.mielpanera.gestor_pedidos_miel.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mielpanera.gestor_pedidos_miel.dto.PedidoDTO;
+import com.mielpanera.gestor_pedidos_miel.model.PedidoDTO;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
