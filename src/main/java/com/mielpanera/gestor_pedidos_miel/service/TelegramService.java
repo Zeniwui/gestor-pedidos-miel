@@ -30,11 +30,9 @@ public class TelegramService {
         String mensajeCliente = "¡Hola " + nombre + "! 🐝 Tu pedido de miel #" + order.getId() +
                 " ha sido entregado. ¡Esperamos que lo disfrutes! 🍯";
 
-        // 3. Generamos el enlace wa.me (codificando espacios y símbolos)
         String waLink = "https://wa.me/" + telefonoLimpio + "?text=" +
                 URLEncoder.encode(mensajeCliente, StandardCharsets.UTF_8);
 
-        // 4. Creamos el mensaje para TI (Telegram) usando HTML
         String mensajeTelegram = "<b>📦 PEDIDO #" + order.getId() + " ENTREGADO</b>\n" +
                 "Cliente: " + nombre + "\n" +
                 "Estado: Completado en Woo ✅\n\n" +
@@ -43,6 +41,43 @@ public class TelegramService {
 
         enviarMensajeTelegram(mensajeTelegram);
     }
+
+    public void notificarPedidoPreparado(PedidoDTO order) {
+        // 1. Extraemos datos básicos
+        String phone = order.getBilling().getPhoneNumber();
+        String nombre = order.getBilling().getFirstName();
+        String trackingNumber = order.getTrackingNumber();
+
+        String telefonoLimpio = limpiarTelefono(phone);
+
+        String correosLink = "https://www.correos.es/es/es/herramientas/localizador/envios/detalle?tracking-number=" + trackingNumber;
+
+        String mensajeCliente = "¡Hola " + nombre + "! 🐝 Tu pedido de miel #" + order.getId() +
+                " ya ha sido preparado y listo para entregar a Correos. 🚚\n\n" +
+                "Puedes seguir el estado de tu paquete aquí:\n" +
+                correosLink + "\n\n" +
+                "¡Muchas gracias por tu confianza!";
+
+        String waLink = "";
+        try {
+            waLink = "https://wa.me/" + telefonoLimpio + "?text=" +
+                    URLEncoder.encode(mensajeCliente, StandardCharsets.UTF_8.toString());
+        } catch (Exception e) {
+            System.err.println("Error codificando URL: " + e.getMessage());
+            return;
+        }
+
+        String mensajeTelegram = "<b>🚚 PEDIDO #" + order.getId() + " PREPARADO</b>\n" +
+                "Cliente: " + nombre + "\n" +
+                "Tracking: <code>" + trackingNumber + "</code>\n" +
+                "Estado: Listo para transporte 🟡\n\n" +
+                "👇 <b>Pulsa aquí para enviar el tracking:</b>\n" +
+                "<a href=\"" + waLink + "\">📲 Enviar WhatsApp con Tracking</a>";
+
+        // 6. Enviamos a tu Telegram
+        enviarMensajeTelegram(mensajeTelegram);
+    }
+
 
     public void notificarPedidoDisposicion(PedidoDTO pedido) {
         String phone = pedido.getBilling().getPhoneNumber();

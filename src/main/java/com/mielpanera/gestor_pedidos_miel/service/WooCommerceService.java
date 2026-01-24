@@ -164,30 +164,78 @@ public class WooCommerceService {
         }
     }
 
-    public void addProductsInObservations(PedidoDTO order) {
+    public boolean verifyOrderNote(PedidoDTO order, String searchString) {
 
-        String productsAddNote = order.getCustomerNote() + "\n" + productLineParser(order);
-
-        System.out.println(productsAddNote);
-
-        String url = STORE_URL + "/wp-json/wc/v3/orders/" + order.getId();
+        String url = STORE_URL + "/wp-json/wc/v3/orders/" + order.getId() + "/notes?per_page=100";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setBasicAuth(CONSUMER_KEY, CONSUMER_SECRET);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        Map<String, Object> noteData = new HashMap<>();
-        noteData.put("customer_note", productsAddNote);
-
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(noteData, headers);
+        HttpEntity<String> entity = new HttpEntity<>(headers);
 
         try {
-            restTemplate.postForObject(url, entity, Map.class);
-            System.out.println("Nota añadida correctamente al pedido " + order.getId());
+            // 2. Usamos exchange con Map[].class porque la API devuelve un Array de JSON
+            ResponseEntity<Map[]> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    entity,
+                    Map[].class
+            );
+
+            Map[] notes = response.getBody();
+
+            if (notes != null) {
+
+                for (Map note : notes) {
+
+                    String content = (String) note.get("note");
+
+                    if (content != null && content.contains(searchString)) {
+                        System.out.println("Nota encontrada ID: " + note.get("id"));
+                        return true;
+                    }
+                }
+            }
 
         } catch (Exception e) {
-            System.err.println("Error al añadir nota al pedido " + order.getId() + ": " + e.getMessage());
+            System.err.println("Error al buscar notas en el pedido " + order.getId() + ": " + e.getMessage());
         }
+
+        return false;
+    }
+
+    public void addProductsInObservations(PedidoDTO order) {
+
+        if (!verifyOrderNote(order, "observationAdded=true")) {
+
+            String productsAddNote = order.getCustomerNote() + "\n" + productLineParser(order);
+
+            System.out.println(productsAddNote);
+
+            String url = STORE_URL + "/wp-json/wc/v3/orders/" + order.getId();
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBasicAuth(CONSUMER_KEY, CONSUMER_SECRET);
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            Map<String, Object> noteData = new HashMap<>();
+            noteData.put("customer_note", productsAddNote);
+
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(noteData, headers);
+
+            try {
+                restTemplate.postForObject(url, entity, Map.class);
+
+                String observationAddedConfirmation = "observationAdded=true";
+                addOrderNote(order.getId(), observationAddedConfirmation, false);
+
+                System.out.println("Observación añadida correctamente al pedido " + order.getId());
+
+
+            } catch (Exception e) {
+                System.err.println("Error al añadir observación al pedido " + order.getId() + ": " + e.getMessage());
+            }
+        }
+
     }
 
     public String productLineParser(PedidoDTO order) {
