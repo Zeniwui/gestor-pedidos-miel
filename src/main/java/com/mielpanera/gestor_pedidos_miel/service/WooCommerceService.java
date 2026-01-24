@@ -102,11 +102,11 @@ public class WooCommerceService {
         return allOrders;
     }
 
-    public PedidoDTO actualizarEstadoPedido(int idOrder, String newStatus) {
+    public PedidoDTO actualizarEstadoPedido(PedidoDTO order, String newStatus) {
 
         System.out.println("Actualizando pedido...");
 
-        String url = STORE_URL + "/wp-json/wc/v3/orders/" + idOrder;
+        String url = STORE_URL + "/wp-json/wc/v3/orders/" + order.getId();
 
         HttpHeaders headers = new HttpHeaders();
         headers.setBasicAuth(CONSUMER_KEY, CONSUMER_SECRET);
@@ -126,21 +126,21 @@ public class WooCommerceService {
             );
             System.out.println("Pedido actualizado");
 
-            String note = "API: Estado de pedido actualizado automáticamente";
-            addOrderNote(idOrder, note, false);
+            String note = "API: Estado de pedido actualizado a: " + newStatus;
+            addOrderNote(order, note, false);
 
             return response.getBody();
 
         } catch (HttpClientErrorException e) {
         // Manejo de errores específicos (ej: ID no existe devuelve 404)
-        System.err.println("Error al actualizar el pedido " + idOrder + ": " + e.getResponseBodyAsString());
+        System.err.println("Error al actualizar el pedido " + order.getId() + ": " + e.getResponseBodyAsString());
         throw e; // O devuelve null según tu lógica de negocio
         }
     }
 
-    public void addOrderNote(int idOrder, String noteContent, boolean isCustomerNote) {
+    public void addOrderNote(PedidoDTO order, String noteContent, boolean isCustomerNote) {
 
-        String url = STORE_URL + "/wp-json/wc/v3/orders/" + idOrder + "/notes";
+        String url = STORE_URL + "/wp-json/wc/v3/orders/" + order.getId() + "/notes";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setBasicAuth(CONSUMER_KEY, CONSUMER_SECRET);
@@ -156,10 +156,10 @@ public class WooCommerceService {
             // No necesitamos mapear la respuesta a un DTO complejo si solo queremos confirmar que se creó.
             // Usamos Map.class para recibir la respuesta genérica.
             restTemplate.postForObject(url, entity, Map.class);
-            System.out.println("Nota añadida correctamente al pedido " + idOrder);
+            System.out.println("Nota añadida correctamente al pedido " + order.getId());
 
         } catch (Exception e) {
-            System.err.println("Error al añadir nota al pedido " + idOrder + ": " + e.getMessage());
+            System.err.println("Error al añadir nota al pedido " + order.getId() + ": " + e.getMessage());
             // Decidimos no lanzar excepción aquí para no interrumpir el flujo principal si la nota falla
         }
     }
@@ -226,7 +226,7 @@ public class WooCommerceService {
                 restTemplate.postForObject(url, entity, Map.class);
 
                 String observationAddedConfirmation = "observationAdded=true";
-                addOrderNote(order.getId(), observationAddedConfirmation, false);
+                addOrderNote(order, observationAddedConfirmation, false);
 
                 System.out.println("Observación añadida correctamente al pedido " + order.getId());
 
@@ -236,6 +236,33 @@ public class WooCommerceService {
             }
         }
 
+    }
+
+    public void getOrderJson(int orderID) {
+        String url = STORE_URL + "/wp-json/wc/v3/orders/" + orderID;
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBasicAuth(CONSUMER_KEY, CONSUMER_SECRET);
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    entity,
+                    String.class // Pedimos que nos devuelva el cuerpo como String (JSON crudo)
+            );
+
+            //Convertimos el json que recibimos en un formato bonito para mostrarlo por consola
+            Object jsonObject = objectMapper.readValue(response.getBody(), Object.class);
+
+            String jsonLegible = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonObject);
+
+            System.out.println(jsonLegible);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error al obtener el pedido de WooCommerce: " + e.getMessage());
+        }
     }
 
     public String productLineParser(PedidoDTO order) {
