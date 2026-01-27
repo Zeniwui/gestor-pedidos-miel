@@ -53,7 +53,7 @@ public class CorreosScraperService {
             // 3. Obtenemos el cuerpo de la respuesta (el JSON)
             String jsonBody = response.body();
 
-            /*// --- DEBUGGING: ESTA ES LA LÍNEA MÁGICA ---
+/*            // --- DEBUGGING: ESTA ES LA LÍNEA MÁGICA ---
             System.out.println("--------------------------------------------------");
             System.out.println("JSON RAW CORREOS (" + trackingId + "):");
             System.out.println(jsonBody);
@@ -95,7 +95,9 @@ public class CorreosScraperService {
                 if (eventsArray != null && !eventsArray.isEmpty()) {
                     JsonNode lastEvent = eventsArray.get(eventsArray.size()-1);
 
-                    if (lastEvent.has("summaryText")) {
+                    if (lastEvent.has("extendedText")) {
+                        return lastEvent.get("extendedText").asText();
+                    } else if (lastEvent.has("summaryText")) {
                         return lastEvent.get("summaryText").asText();
                     } else if (lastEvent.has("desPhase")) {
                         return lastEvent.get("desPhase").asText();

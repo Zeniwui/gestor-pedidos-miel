@@ -104,6 +104,17 @@ public class TelegramService {
         enviarMensajeTelegram(mensajeTelegram);
     }
 
+    public void notificarPedidoAtascado(PedidoDTO pedido, String estado, long diasSinMoverse) {
+        String mensaje = "⚠️ <b>ALERTA DE PEDIDO ATASCADO</b> ⚠️\n\n" +
+                "📦 <b>Pedido:</b> #" + pedido.getId() + "\n" +
+                "👤 <b>Cliente:</b> " + pedido.getBilling().getNombreCompleto() + "\n" +
+                "🚚 <b>Estado Correos:</b> " + estado + "\n" +
+                "⏳ <b>Días sin cambios:</b> " + diasSinMoverse + " días\n\n" +
+                "🔍 <i>Revisa la web de Correos manualmente.</i>";
+
+        enviarMensajeTelegram(mensaje);
+    }
+
     public void enviarMensajeTelegram(String mensajeHtml) {
         try {
             String url = "https://api.telegram.org/bot" + telegramToken + "/sendMessage";
