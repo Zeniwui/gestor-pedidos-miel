@@ -73,6 +73,7 @@ public class GestorPedidosMielApplication {
 				// D) Está parado
 				else if (estadoMayus.contains("PARADO")) {
 					System.err.println("⚠️ PEDIDO PARADO: PENDIENTE DE INDICACIONES");
+					telegramService.alertarPedidoEstacionado(order);
 				}
 			}
 

@@ -100,11 +100,11 @@ public class CorreosScraperService {
                     JsonNode lastEvent = eventsArray.get(eventsArray.size()-1);
 
                     if (lastEvent.has("extendedText")) {
-                        estadoTexto = lastEvent.get("desPhase").asText();
+                        estadoTexto = lastEvent.get("extendedText").asText();
                     } else if (lastEvent.has("summaryText")) {
                         estadoTexto = lastEvent.get("summaryText").asText();
-                    } else if (lastEvent.has("extendedText")) {
-                        estadoTexto = lastEvent.get("extendedText").asText();
+                    } else if (lastEvent.has("desPhase")) {
+                        estadoTexto = lastEvent.get("desPhase").asText();
                     }
 
                     // B) Extraer la FECHA
