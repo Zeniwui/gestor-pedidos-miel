@@ -104,7 +104,17 @@ public class TelegramService {
         enviarMensajeTelegram(mensajeTelegram);
     }
 
-    public void notificarPedidoAtascado(PedidoDTO pedido, String estado, long diasSinMoverse) {
+    public void alertarPedidoEstacionado(PedidoDTO pedido) {
+        String mensaje = "⚠️ <b>ALERTA DE PEDIDO ESTACIONADO</b> ⚠️\n\n" +
+                "📦 <b>Pedido:</b> #" + pedido.getId() + "\n" +
+                "👤 <b>Cliente:</b> " + pedido.getBilling().getNombreCompleto() + "\n" +
+                "🚚 <b>Estado Correos:</b> " + "ESTACIONADO" + "\n" +
+                "🔍 <i>Revisa la web de Correos manualmente.</i>";
+
+        enviarMensajeTelegram(mensaje);
+    }
+
+    public void alertarPedidoAtascado(PedidoDTO pedido, String estado, long diasSinMoverse) {
         String mensaje = "⚠️ <b>ALERTA DE PEDIDO ATASCADO</b> ⚠️\n\n" +
                 "📦 <b>Pedido:</b> #" + pedido.getId() + "\n" +
                 "👤 <b>Cliente:</b> " + pedido.getBilling().getNombreCompleto() + "\n" +

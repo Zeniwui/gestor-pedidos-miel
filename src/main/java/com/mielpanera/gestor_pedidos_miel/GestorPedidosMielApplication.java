@@ -1,5 +1,6 @@
 package com.mielpanera.gestor_pedidos_miel;
 
+import com.mielpanera.gestor_pedidos_miel.model.CorreosInfo;
 import com.mielpanera.gestor_pedidos_miel.model.PedidoDTO;
 import com.mielpanera.gestor_pedidos_miel.service.CorreosScraperService;
 import com.mielpanera.gestor_pedidos_miel.service.TelegramService;
@@ -9,6 +10,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @SpringBootApplication
@@ -39,47 +42,41 @@ public class GestorPedidosMielApplication {
 
 			for (PedidoDTO order: ordersPreparedCocex) {
 
-				String statusReal = correosScraperService.obtenerEstadoActual(order.getTrackingNumber());
+				CorreosInfo info = correosScraperService.obtenerEstadoActual(order.getTrackingNumber());
 
-				System.out.printf("📦 Order ID: %-10s | 👤 %-20s | 🚚 Track: %-15s | ℹ️ %s%n",
+				long diasSinMoverse = ChronoUnit.DAYS.between(info.fechaEvento(), LocalDate.now());
+				String estadoMayus = info.estado().toUpperCase();
+
+				System.out.printf("📦 ID: %-5s | 👤 %-15s | 🚚 %-15s | 📅 %-10s (+%d días) | ℹ️ %s%n",
 						order.getId(),
 						order.getBilling().getNombreCompleto(),
 						order.getTrackingNumber(),
-						statusReal
+						info.fechaEvento(), // Fecha del último evento
+						diasSinMoverse,     // Días transcurridos
+						info.estado()
 				);
 
-				if (statusReal.toUpperCase().contains("ENTREGADO")) {
+				// A) ¿Está entregado? -> Actualizar Woo
+				if (estadoMayus.contains("ENTREGADO")) {
 					wooService.actualizarEstadoPedido(order, "completed");
-				} else if (statusReal.toUpperCase().contains("DEVOLUCIÓN")) {
+
+				}
+				// B) ¿Es una devolución? -> Marcar devuelto
+				else if (estadoMayus.contains("DEVOLUCIÓN") || estadoMayus.contains("DEVUELTO")) {
 					wooService.actualizarEstadoPedido(order, "returned-cocex");
-				} else if (statusReal.toUpperCase().contains("SE ENCUENTRA EN LA OFICINA DE CORREOS")) {
+
+				}
+				// C) ¿Está en oficina esperando al cliente? -> Avisar por Telegram
+				else if (estadoMayus.toUpperCase().contains("SE ENCUENTRA EN LA OFICINA DE CORREOS")) {
 					telegramService.notificarPedidoDisposicion(order);
-				} else if (statusReal.toUpperCase().contains("PARADO")) {
-					System.err.println("PENDIENTE DE INDICACIONES");
+				}
+				// D) Está parado
+				else if (estadoMayus.contains("PARADO")) {
+					System.err.println("⚠️ PEDIDO PARADO: PENDIENTE DE INDICACIONES");
 				}
 			}
 
-
-
-/*			System.out.println("--- PRUEBA CORREOS ---");
-			String trackingCode;
-			for (PedidoDTO order: orders) {
-				trackingCode = order.getTrackingNumber();
-
-
-				String statusCorreos = correosScraperService.obtenerEstadoActual(trackingCode);
-				System.out.println(trackingCode + "; estado: " + statusCorreos);
-
-				if (statusCorreos.toUpperCase().contains("ENTREGADO")) {
-					System.out.println("-> ¡Pedido completado! Actualizando Woo...");
-					// wooClient.updateOrderStatus(pedido.id(), "completed");
-				}
-
-				break;
-			}*/
-
-
-
+			System.out.println("------------------------ FINALIZADO -------------------------------");
 		};
 	}
 

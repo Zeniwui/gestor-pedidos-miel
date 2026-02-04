@@ -2,24 +2,28 @@ package com.mielpanera.gestor_pedidos_miel.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mielpanera.gestor_pedidos_miel.model.CorreosInfo;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 @Service
 public class CorreosScraperService {
 
     // Esta es la URL interna que usa la web de Correos (descubierta con F12)
     private static final String API_OCULTA_URL = "https://api1.correos.es/digital-services/searchengines/api/v1/envios?text={TRACKING}&language=ES";
+    private static final DateTimeFormatter FORMATO_FECHA_CORREOS = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-    public String obtenerEstadoActual(String trackingId) {
+    public CorreosInfo obtenerEstadoActual(String trackingId) {
         try {
             // 1. Construimos la URL
             if (trackingId == null || trackingId.trim().isEmpty()) {
                 System.err.println("Error: Se ha intentado consultar un Tracking ID nulo o vacío.");
-                return "ID_NVÁLIDO";
+                return new CorreosInfo("ID_INVALIDO", LocalDate.now());
             }
 
             String url = API_OCULTA_URL.replace("{TRACKING}", trackingId);
@@ -67,17 +71,16 @@ public class CorreosScraperService {
 
         } catch (org.jsoup.HttpStatusException e) {
             if (e.getStatusCode() == 404) {
-                return "NOT_FOUND"; // El código no existe
+                return new CorreosInfo("NOT_FOUND", LocalDate.now());
             }
-            System.err.println("Error HTTP consultando Correos: " + e.getStatusCode());
-            return "ERROR";
+            return new CorreosInfo("ERROR_HTTP", LocalDate.now());
         } catch (IOException e) {
             System.err.println("Error de conexión: " + e.getMessage());
-            return "ERROR";
+            return new CorreosInfo("ERROR_CONEXION", LocalDate.now());
         }
     }
 
-    private String extraerUltimoEstado(String json) {
+    private CorreosInfo extraerUltimoEstado(String json) {
         try {
             ObjectMapper mapper = new ObjectMapper();
             JsonNode root = mapper.readTree(json);
@@ -92,24 +95,35 @@ public class CorreosScraperService {
                 // Buscamos la lista "events" dentro del envio
                 JsonNode eventsArray = firstEntry.get("events");
 
+                String estadoTexto = "DESCONOCIDO";
                 if (eventsArray != null && !eventsArray.isEmpty()) {
                     JsonNode lastEvent = eventsArray.get(eventsArray.size()-1);
 
                     if (lastEvent.has("extendedText")) {
-                        return lastEvent.get("extendedText").asText();
+                        estadoTexto = lastEvent.get("desPhase").asText();
                     } else if (lastEvent.has("summaryText")) {
-                        return lastEvent.get("summaryText").asText();
-                    } else if (lastEvent.has("desPhase")) {
-                        return lastEvent.get("desPhase").asText();
+                        estadoTexto = lastEvent.get("summaryText").asText();
+                    } else if (lastEvent.has("extendedText")) {
+                        estadoTexto = lastEvent.get("extendedText").asText();
                     }
+
+                    // B) Extraer la FECHA
+                    LocalDate fechaEvento = LocalDate.now(); // Por defecto hoy si falla
+                    if (lastEvent.has("eventDate")) {
+                        String fechaStr = lastEvent.get("eventDate").asText(); // "16/01/2026"
+                        try {
+                            fechaEvento = LocalDate.parse(fechaStr, FORMATO_FECHA_CORREOS);
+                        } catch (Exception e) {
+                            System.err.println("No se pudo parsear la fecha: " + fechaStr);
+                        }
+                    }
+                    return new CorreosInfo(estadoTexto, fechaEvento);
                 }
             }
-
-            return "DESCONOCIDO - SIN EVENTOS";
-
+            return new CorreosInfo("DESCONOCIDO - SIN EVENTOS", LocalDate.now());
         } catch (Exception e) {
             System.err.println("Error parseando JSON Correos: " + e.getMessage());
-            return "ERROR_PARSING";
+            return new CorreosInfo("ERROR_PARSING", LocalDate.now());
         }
     }
 }
