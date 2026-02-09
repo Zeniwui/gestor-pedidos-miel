@@ -14,6 +14,7 @@ public class TelegramService {
 
     private final String telegramToken = System.getenv("TELEGRAM_TOKEN");
     private final String telegramChatID = System.getenv("TELEGRAM_CHAT_ID");
+    private final String TELEFONOOFICIAL = System.getenv("TELEFONO_OFICIAL");
 
     private final RestClient restClient;
 
@@ -123,6 +124,25 @@ public class TelegramService {
                 "🔍 <i>Revisa la web de Correos manualmente.</i>";
 
         enviarMensajeTelegram(mensaje);
+    }
+
+    public void alertarPedidoNoEnviado(PedidoDTO pedido, String estado, long diasSinMoverse) {
+        String mensaje = "⚠️ ALERTA DE PEDIDO NO ENVIADO ⚠️\n\n" +
+                "📦 Pedido: #" + pedido.getId() + "\n" +
+                "👤 Cliente: " + pedido.getBilling().getNombreCompleto() + "\n" +
+                "🚚 Estado Correos: " + estado + "\n" +
+                "⏳ Días sin cambios: " + diasSinMoverse + " días\n\n" +
+                "🔍 Revisar por si no se ha entregado a la cartera";
+
+        String waLink = "https://wa.me/" + TELEFONOOFICIAL + "?text=" +
+                URLEncoder.encode(mensaje, StandardCharsets.UTF_8);
+
+        String mensajeTelegram = "<b>📦 PEDIDO #" + pedido.getId() + " NO ENVIADO</b>\n" +
+                "Cliente: " + pedido.getBilling().getNombreCompleto() + "\n" +
+                "Estado: Prerregistrado desde hace días\n\n" +
+                "👇 <b>Pulsa aquí para mandar a WhatsApp:</b>\n" +
+                "<a href=\"" + waLink + "\">📲 Enviar WhatsApp</a>";
+        enviarMensajeTelegram(mensajeTelegram);
     }
 
     public void enviarMensajeTelegram(String mensajeHtml) {
