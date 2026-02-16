@@ -67,13 +67,15 @@ public class GestorPedidosMielApplication {
 
 				}
 				// C) ¿Está en oficina esperando al cliente? -> Avisar por Telegram
-				else if (estadoMayus.contains("SE ENCUENTRA EN LA OFICINA DE CORREOS")) {
+				else if (estadoMayus.contains("SE ENCUENTRA EN LA OFICINA DE CORREOS") || estadoMayus.contains("DISPOSICIÓN")) {
 					telegramService.notificarPedidoDisposicion(order);
 				}
 				// D) Está parado
 				else if (estadoMayus.contains("PARADO")) {
 					System.err.println("⚠️ PEDIDO PARADO: PENDIENTE DE INDICACIONES");
 					telegramService.alertarPedidoEstacionado(order);
+
+				// E) Está prerregistrado desde hace días y no se ha movido
 				} else if (estadoMayus.contains("PRERREGISTRADO") && diasSinMoverse > 3) {
 					telegramService.alertarPedidoNoEnviado(order, estadoMayus, diasSinMoverse);
 				}
