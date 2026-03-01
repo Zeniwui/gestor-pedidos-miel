@@ -10,6 +10,9 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 
 @Service
 public class CorreosScraperService {
@@ -17,6 +20,17 @@ public class CorreosScraperService {
     // Esta es la URL interna que usa la web de Correos (descubierta con F12)
     private static final String API_OCULTA_URL = "https://api1.correos.es/digital-services/searchengines/api/v1/envios?text={TRACKING}&language=ES";
     private static final DateTimeFormatter FORMATO_FECHA_CORREOS = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+    // Lista de User-Agents
+    private static final List<String> USER_AGENTS = Arrays.asList(
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36", // Chrome Windows
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_3_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3 Safari/605.1.15", // Safari Mac
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0", // Firefox Windows
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0", // Edge Windows
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36" // Chrome Linux
+    );
+
+    private static final Random RANDOM = new Random();
 
     public CorreosInfo obtenerEstadoActual(String trackingId) {
         try {
@@ -28,21 +42,12 @@ public class CorreosScraperService {
 
             String url = API_OCULTA_URL.replace("{TRACKING}", trackingId);
 
-            // 2. Usamos Jsoup para hacer la petición HTTP
-            // Es CRÍTICO hacerse pasar por un navegador real (User Agent)
-            // y añadir el 'Referer' para que Correos crea que venimos de su web.
-            /*Connection.Response response = Jsoup.connect(url)
-                    .ignoreContentType(true) // Importante: Correos devuelve JSON, Jsoup espera HTML por defecto
-                    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-                    .header("Referer", "https://www.correos.es/")
-                    .header("Origin", "https://www.correos.es")
-                    .method(Connection.Method.GET)
-                    .execute();
-*/
+            String userAgentAleatorio = USER_AGENTS.get(RANDOM.nextInt(USER_AGENTS.size()));
+
             Connection.Response response = Jsoup.connect(url)
                     .ignoreContentType(true)
                     .timeout(10000) // Darle 10 segundos por si acaso
-                    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                    .userAgent(userAgentAleatorio)
                     .header("Accept", "application/json, text/plain, */*")
                     .header("Accept-Language", "es-ES,es;q=0.9")
                     .header("Referer", "https://www.correos.es/")
@@ -57,7 +62,7 @@ public class CorreosScraperService {
             // 3. Obtenemos el cuerpo de la respuesta (el JSON)
             String jsonBody = response.body();
 
-/*            // --- DEBUGGING: ESTA ES LA LÍNEA MÁGICA ---
+/*            // --- DEBUGGING ---
             System.out.println("--------------------------------------------------");
             System.out.println("JSON RAW CORREOS (" + trackingId + "):");
             System.out.println(jsonBody);
@@ -66,12 +71,15 @@ public class CorreosScraperService {
 
 
             // 4. Analizamos el JSON
-            // Correos suele devolver una lista de eventos. Queremos el último (el más reciente).
             return extraerUltimoEstado(jsonBody);
 
         } catch (org.jsoup.HttpStatusException e) {
             if (e.getStatusCode() == 404) {
                 return new CorreosInfo("NOT_FOUND", LocalDate.now());
+            } else if (e.getStatusCode() == 429 || e.getStatusCode() == 403) {
+                // --- Detectamos el bloqueo de Correos ---
+                System.err.println("🚨 BLOQUEO DETECTADO por Correos (HTTP " + e.getStatusCode() + ")");
+                return new CorreosInfo("BLOQUEO_IP", LocalDate.now());
             }
             return new CorreosInfo("ERROR_HTTP", LocalDate.now());
         } catch (IOException e) {

@@ -145,6 +145,15 @@ public class TelegramService {
         enviarMensajeTelegram(mensajeTelegram);
     }
 
+    public void alertarBloqueoIP() {
+        String mensaje = "🚨 <b>ALERTA CRÍTICA: BLOQUEO DE IP</b> 🚨\n\n" +
+                "El servidor de Correos ha devuelto un error 429 (Too Many Requests) o 403 (Forbidden).\n" +
+                "Se ha <b>detenido</b> el escaneo automático para evitar un baneo permanente.\n\n" +
+                "🛑 <i>El proceso se ha pausado por seguridad.</i>";
+
+        enviarMensajeTelegram(mensaje);
+    }
+
     public void enviarMensajeTelegram(String mensajeHtml) {
         try {
             String url = "https://api.telegram.org/bot" + telegramToken + "/sendMessage";

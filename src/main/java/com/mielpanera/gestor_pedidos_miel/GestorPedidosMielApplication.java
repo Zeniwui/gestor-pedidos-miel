@@ -47,6 +47,13 @@ public class GestorPedidosMielApplication {
 				long diasSinMoverse = ChronoUnit.DAYS.between(info.fechaEvento(), LocalDate.now());
 				String estadoMayus = info.estado().toUpperCase();
 
+				// SEGURIDAD POR SI NOS BLOQUEAN
+				if (estadoMayus.equals("BLOQUEO_IP")) {
+					System.err.println("⚠️ Deteniendo la ejecución por bloqueo de IP...");
+					telegramService.alertarBloqueoIP();
+					break;
+				}
+
 				System.out.printf("📦 ID: %-5s | 👤 %-15s | 🚚 %-15s | 📅 %-10s (+%d días) | ℹ️ %s%n",
 						order.getId(),
 						order.getBilling().getNombreCompleto(),
@@ -78,6 +85,17 @@ public class GestorPedidosMielApplication {
 				// E) Está prerregistrado desde hace días y no se ha movido
 				} else if (estadoMayus.contains("PRERREGISTRADO") && diasSinMoverse > 3) {
 					telegramService.alertarPedidoNoEnviado(order, estadoMayus, diasSinMoverse);
+				}
+
+				// Pausa aleatoria entre peticiones
+				try {
+					// Genera un tiempo aleatorio entre 3 y 7 segundos (3000ms a 7000ms)
+					long sleepTime = 3000 + (long) (Math.random() * 4000);
+					System.out.println("⏳ Esperando " + (sleepTime / 1000.0) + " segundos antes de consultar el siguiente pedido...");
+					Thread.sleep(sleepTime);
+				} catch (InterruptedException e) {
+					System.err.println("Error durante la pausa de seguridad: " + e.getMessage());
+					Thread.currentThread().interrupt();
 				}
 			}
 
