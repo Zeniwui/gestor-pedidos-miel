@@ -177,15 +177,12 @@ public class TelegramService {
     }
 
     public String limpiarTelefono(String telefono) {
-        // 1. Evitamos errores si el string viene nulo
         if (telefono == null) {
             return null;
         }
 
-        // 2. Eliminamos todos los espacios en blanco
-        String telefonoLimpio = telefono.replaceAll("\\s+", "");
+        String telefonoLimpio = telefono.replaceAll("\\s+", "").replace("+", "");
 
-        // 3. Aplicamos tu lógica original sobre la variable limpia
         if (!telefonoLimpio.startsWith("34") && telefonoLimpio.length() == 9) {
             return "34" + telefonoLimpio;
         }
