@@ -18,6 +18,9 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Dar permisos de ejecución a Maven
+        run: chmod +x mvnw
+
       - name: Ejecutar aplicación Spring Boot
         env:
           # Variables de WooCommerce
