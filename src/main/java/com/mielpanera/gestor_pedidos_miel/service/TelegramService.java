@@ -13,9 +13,13 @@ import java.nio.charset.StandardCharsets;
 public class TelegramService {
 
     private final String telegramToken = System.getenv("TELEGRAM_TOKEN");
+    private final String tokenPreparados = System.getenv("TELEGRAM_PREPARADOS");
+    private final String tokenDisposicion = System.getenv("TELEGRAM_DISPOSICION");
+    private final String tokenNoEnviados = System.getenv("TELEGRAM_NOENVIADOS");
+    private final String tokenAlertas = System.getenv("TELEGRAM_ALERTAS");
+    private final String tokenEstacionados = System.getenv("TELEGRAM_ESTACIONADOS");
     private final String telegramChatID = System.getenv("TELEGRAM_CHAT_ID");
     private final String TELEFONOOFICIAL = System.getenv("TELEFONO_OFICIAL");
-
     private final RestClient restClient;
 
     public TelegramService(RestClient restClient) {
@@ -40,7 +44,7 @@ public class TelegramService {
                 "👇 <b>Pulsa aquí para avisar al cliente:</b>\n" +
                 "<a href=\"" + waLink + "\">📲 Enviar WhatsApp</a>";
 
-        enviarMensajeTelegram(mensajeTelegram);
+        enviarMensajeTelegram(mensajeTelegram, tokenPreparados);
     }
 
     public void notificarPedidoPreparado(PedidoDTO order) {
@@ -76,7 +80,7 @@ public class TelegramService {
                 "<a href=\"" + waLink + "\">📲 Enviar WhatsApp con Tracking</a>";
 
         // 6. Enviamos a tu Telegram
-        enviarMensajeTelegram(mensajeTelegram);
+        enviarMensajeTelegram(mensajeTelegram, tokenPreparados);
     }
 
 
@@ -102,7 +106,7 @@ public class TelegramService {
                 "👇 <b>Pulsa aquí para avisar al cliente:</b>\n" +
                 "<a href=\"" + waLink + "\">📲 Enviar WhatsApp</a>";
 
-        enviarMensajeTelegram(mensajeTelegram);
+        enviarMensajeTelegram(mensajeTelegram, tokenDisposicion);
     }
 
     public void alertarPedidoEstacionado(PedidoDTO pedido) {
@@ -112,7 +116,7 @@ public class TelegramService {
                 "🚚 <b>Estado Correos:</b> " + "ESTACIONADO" + "\n" +
                 "🔍 <i>Revisa la web de Correos manualmente.</i>";
 
-        enviarMensajeTelegram(mensaje);
+        enviarMensajeTelegram(mensaje, tokenEstacionados);
     }
 
     public void alertarPedidoAtascado(PedidoDTO pedido, String estado, long diasSinMoverse) {
@@ -123,7 +127,7 @@ public class TelegramService {
                 "⏳ <b>Días sin cambios:</b> " + diasSinMoverse + " días\n\n" +
                 "🔍 <i>Revisa la web de Correos manualmente.</i>";
 
-        enviarMensajeTelegram(mensaje);
+        enviarMensajeTelegram(mensaje, telegramToken);
     }
 
     public void alertarPedidoNoEnviado(PedidoDTO pedido, String estado, long diasSinMoverse) {
@@ -142,7 +146,7 @@ public class TelegramService {
                 "Estado: Prerregistrado desde hace días\n\n" +
                 "👇 <b>Pulsa aquí para mandar a WhatsApp:</b>\n" +
                 "<a href=\"" + waLink + "\">📲 Enviar WhatsApp</a>";
-        enviarMensajeTelegram(mensajeTelegram);
+        enviarMensajeTelegram(mensajeTelegram, tokenNoEnviados);
     }
 
     public void alertarBloqueoIP() {
@@ -151,17 +155,25 @@ public class TelegramService {
                 "Se ha <b>detenido</b> el escaneo automático para evitar un baneo permanente.\n\n" +
                 "🛑 <i>El proceso se ha pausado por seguridad.</i>";
 
-        enviarMensajeTelegram(mensaje);
+        enviarMensajeTelegram(mensaje, tokenAlertas);
     }
 
-    public void enviarMensajeTelegram(String mensajeHtml) {
+    /**
+     * Recibe el token y el chatId correspondientes por parámetro
+     */
+    public void enviarMensajeTelegram(String mensajeHtml, String token) {
+        if (token == null || telegramChatID == null) {
+            System.err.println("Error: Token o ChatID de Telegram no configurados.");
+            return;
+        }
+
         try {
-            String url = "https://api.telegram.org/bot" + telegramToken + "/sendMessage";
+            String url = "https://api.telegram.org/bot" + token + "/sendMessage";
 
             MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
             body.add("chat_id", telegramChatID);
             body.add("text", mensajeHtml);
-            body.add("parse_mode", "HTML"); // Importante para que funcione el enlace
+            body.add("parse_mode", "HTML");
 
             restClient.post()
                     .uri(url)
@@ -169,7 +181,7 @@ public class TelegramService {
                     .retrieve()
                     .toBodilessEntity();
 
-            System.out.println("📩 Notificación enviada a Telegram.");
+            System.out.println("📩 Notificación enviada a Telegram (Chat: " + telegramChatID + ").");
 
         } catch (Exception e) {
             System.err.println("Error enviando Telegram: " + e.getMessage());
