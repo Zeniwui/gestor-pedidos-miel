@@ -26,21 +26,48 @@ public class GestorPedidosMielApplication {
 		return (args) -> {
 
 
-/*			List<PedidoDTO> ordersProcessing = wooService.obtenerPedidos("processing");
-			for (PedidoDTO order: ordersProcessing) {
-				if (order.getId() == 2988) {
-					wooService.addProductsInObservations(order);
-					break;
+			//PONER TODOS LOS PEDIDOS CON LA MARCA DE "YA AVISADO"
+/*			System.out.println("--- 🚀 INICIANDO MARCADO MASIVO DE PEDIDOS PREPARADOS ---");
+			List<PedidoDTO> pedidosPreparados = wooService.obtenerPedidos("prepared-cocex");
+			System.out.println("Se han encontrado " + pedidosPreparados.size() + " pedidos para actualizar.");
+			String claveTelegram = "_aviso_telegram_preparado";
+			for (PedidoDTO order : pedidosPreparados) {
+				boolean yaTieneMetaDato = wooService.comprobarAccionMetaData(order, claveTelegram);
+				if (!yaTieneMetaDato) {
+					System.out.println("Añadiendo marca de 'ya avisado' al pedido #" + order.getId() + "...");
+					wooService.actualizarMetaData(order, claveTelegram, "true");
+					wooService.imprimirMetaDataVisual(order);
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						Thread.currentThread().interrupt();
+					}
+				} else {
+					System.out.println("El pedido #" + order.getId() + " ya tenía la marca. Saltando...");
 				}
-			}*/
+			}
+			System.out.println("--- ✅ MARCADO MASIVO FINALIZADO ---");
+			System.exit(0);*/
 
 
-			System.out.println("--- INICIANDO TEST DE CONEXIÓN ---");
+
+			String claveTelegram = "_aviso_telegram_preparado";
+
+			System.out.println("--- REVISANDO PEDIDOS PREPARADOS ---");
 			List<PedidoDTO> ordersPreparedCocex = wooService.obtenerPedidos("prepared-cocex");
-			// List<PedidoDTO> ordersInProgressCocex = wooService.obtenerPedidos("inprogress-cocex");
-			System.out.println("--- FIN DE TEST ---");
 
 			for (PedidoDTO order: ordersPreparedCocex) {
+
+				boolean yaAvisado = wooService.comprobarAccionMetaData(order, claveTelegram);
+
+				if (!yaAvisado) {
+					System.out.println("🔔 Notificando (_aviso_telegram_preparado) al cliente del pedido #" + order.getId());
+
+					wooService.actualizarMetaData(order, claveTelegram, "true");
+
+					telegramService.notificarPedidoPreparado(order);
+					continue;
+				}
 
 				CorreosInfo info = correosScraperService.obtenerEstadoActual(order.getTrackingNumber());
 
@@ -100,6 +127,8 @@ public class GestorPedidosMielApplication {
 			}
 
 			System.out.println("------------------------ FINALIZADO -------------------------------");
+
+			//System.exit(0);
 		};
 	}
 

@@ -299,48 +299,89 @@ public class WooCommerceService {
             }
         }
 
-  /*      for (PedidoDTO.LineProduct product: products) {
-            if (product.getProductID() == 48) {
-                noteParsed += product.getQuantity() + "Bos ";
-            } else if (product.getProductID() == 50) {
-                noteParsed += product.getQuantity() + "Br ";
-            } else if (product.getProductID() == 61) {
-                noteParsed += product.getQuantity() + "x(3TL-3Bos) ";
-            }else if (product.getProductID() == 62) {
-                noteParsed += product.getQuantity() + "x(6Br) ";
-            } else if (product.getProductID() == 63) {
-                noteParsed += product.getQuantity() + "x(6Bos) ";
-            } else if (product.getProductID() == 143) {
-                noteParsed += product.getQuantity() + "Tintu ";
-            } else if (product.getProductID() == 145) {
-                noteParsed += product.getQuantity() + "x(3Bos-3Br) ";
-            } else if (product.getProductID() == 146) {
-                noteParsed += product.getQuantity() + "Polen ";
-            }else if (product.getProductID() == 384) {
-                noteParsed += product.getQuantity() + "Palito ";
-            } else if (product.getProductID() == 242) {
-                noteParsed += product.getQuantity() + "TL ";
-            } else if (product.getProductID() == 331) {
-                noteParsed += product.getQuantity() + "Cant ";
-            } else if (product.getProductID() == 339) {
-                noteParsed += product.getQuantity() + "x(6Cant) ";
-            } else if (product.getProductID() == 374) {
-                noteParsed += product.getQuantity() + "x(6TL) ";
-            } else if (product.getProductID() == 393) {
-                noteParsed += product.getQuantity() + "x(2Br-2Bos-2Cant) ";
-            } else if (product.getProductID() == 1190) {
-                noteParsed += product.getQuantity() + "x(2Br-2Bos-2TL) ";
-            } else if (product.getProductID() == 1861) {
-                noteParsed += product.getQuantity() + "PropoleoCrudo ";
-            } else if (product.getProductID() == 1863) {
-                noteParsed += product.getQuantity() + "Cera ";
-            } else if (product.getProductID() == 1865) {
-                noteParsed += product.getQuantity() + "Cesta ";
-            }
-
-        }*/
-
         return noteParsed.toString();
+    }
+    /*
+    * Busca si la clave específica existe en los meta datos y si tiene valor "true" o "yes"
+    * */
+    public boolean comprobarAccionMetaData(PedidoDTO order, String metaKey) {
+        if (order.getMetaData() == null || order.getMetaData().isEmpty()) {
+            return false; // Si no hay meta datos, no se ha hecho la acción
+        }
+
+        for (PedidoDTO.MetaData meta : order.getMetaData()) {
+            if (metaKey.equals(meta.getKey())) {
+                String valor = meta.getValueAsString();
+                // Verificamos si existe y si su valor es true o yes
+                return "true".equalsIgnoreCase(valor) || "yes".equalsIgnoreCase(valor);
+            }
+        }
+        return false;
+    }
+    /*
+    * Hace llamada PUT a la API de Woocommerce para actualizar el meta dato
+    * */
+    public void actualizarMetaData(PedidoDTO order, String metaKey, String metaValue) {
+        String url = STORE_URL + "/wp-json/wc/v3/orders/" + order.getId();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBasicAuth(CONSUMER_KEY, CONSUMER_SECRET);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // La API de Woo espera un objeto JSON con una lista "meta_data" dentro
+        List<Map<String, String>> metaDataList = new ArrayList<>();
+        Map<String, String> metaDataEntry = new HashMap<>();
+        metaDataEntry.put("key", metaKey);
+        metaDataEntry.put("value", metaValue);
+        metaDataList.add(metaDataEntry);
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("meta_data", metaDataList);
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+        try {
+            restTemplate.exchange(
+                    url,
+                    HttpMethod.PUT,
+                    entity,
+                    Map.class
+            );
+            System.out.println("✅ Meta dato [" + metaKey + "=" + metaValue + "] guardado en WooCommerce.");
+
+            // Opcional: Actualizamos el objeto local en memoria para mantener coherencia
+            PedidoDTO.MetaData nuevoMeta = new PedidoDTO.MetaData();
+            nuevoMeta.setKey(metaKey);
+            nuevoMeta.setValue(metaValue);
+            order.getMetaData().add(nuevoMeta);
+
+        } catch (Exception e) {
+            System.err.println("❌ Error guardando meta dato en pedido " + order.getId() + ": " + e.getMessage());
+        }
+    }
+    /*
+    * Imprime por consola los meta datos de un pedido
+    * */
+    public void imprimirMetaDataVisual(PedidoDTO order) {
+        System.out.println("\n=======================================================");
+        System.out.println("📊 META DATOS DEL PEDIDO #" + order.getId());
+        System.out.println("=======================================================");
+
+        if (order.getMetaData() == null || order.getMetaData().isEmpty()) {
+            System.out.println("  ❌ No hay meta datos registrados en este pedido.");
+        } else {
+            System.out.printf(" %-35s | %s%n", "CLAVE (KEY)", "VALOR (VALUE)");
+            System.out.println("-------------------------------------------------------");
+            for (PedidoDTO.MetaData meta : order.getMetaData()) {
+                // Acortamos el valor si es excesivamente largo para no romper la tabla
+                String valorStr = meta.getValueAsString();
+                if (valorStr.length() > 50) {
+                    valorStr = valorStr.substring(0, 47) + "...";
+                }
+                System.out.printf(" 🔑 %-33s | 🏷️ %s%n", meta.getKey(), valorStr);
+            }
+        }
+        System.out.println("=======================================================\n");
     }
 
 }
