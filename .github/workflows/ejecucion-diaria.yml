@@ -1,0 +1,40 @@
+name: Ejecutar Gestor de Pedidos Miel diariamente
+
+on:
+  schedule:
+    # 14:00 UTC equivale a las 16:00 en Madrid (horario de verano CEST)
+    - cron: '0 14 * * *'
+  workflow_dispatch:
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Ejecutar aplicación Spring Boot
+        env:
+          # Variables de WooCommerce
+          STORE_URL: ${{ secrets.STORE_URL }}
+          WOO_CONSUMER_KEY: ${{ secrets.WOO_CONSUMER_KEY }}
+          WOO_CONSUMER_SECRET: ${{ secrets.WOO_CONSUMER_SECRET }}
+
+          # Variables Generales de Telegram y Contacto
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEFONO_OFICIAL: ${{ secrets.TELEFONO_OFICIAL }}
+
+          # Nuevos Tokens de Telegram por estado
+          TELEGRAM_PREPARADOS: ${{ secrets.TELEGRAM_PREPARADOS }}
+          TELEGRAM_DISPOSICION: ${{ secrets.TELEGRAM_DISPOSICION }}
+          TELEGRAM_NOENVIADOS: ${{ secrets.TELEGRAM_NOENVIADOS }}
+          TELEGRAM_ALERTAS: ${{ secrets.TELEGRAM_ALERTAS }}
+          TELEGRAM_ESTACIONADOS: ${{ secrets.TELEGRAM_ESTACIONADOS }}
+
+        run: ./mvnw spring-boot:run
