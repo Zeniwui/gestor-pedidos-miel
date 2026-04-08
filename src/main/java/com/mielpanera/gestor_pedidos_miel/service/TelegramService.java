@@ -57,7 +57,7 @@ public class TelegramService {
 
         String correosLink = "https://www.correos.es/es/es/herramientas/localizador/envios/detalle?tracking-number=" + trackingNumber;
 
-        String mensajeCliente = "¡Hola " + nombre + "! 🐝 Tu pedido de miel #" + order.getId() +
+        String mensajeCliente = "¡Hola " + nombre + "! 🐝 Tu pedido de miel Nº" + order.getId() +
                 " ya ha sido preparado y listo para entregar a Correos. 🚚\n\n" +
                 "Puedes seguir el estado de tu paquete aquí:\n" +
                 correosLink + "\n\n" +
