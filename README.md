@@ -11,3 +11,12 @@ El plugin de Correos integrado en nuestra página web Wordpress presentaba probl
 1. **Automatizar el seguimiento:** Consultar el estado real de los paquetes haciendo web scraping en la web de Correos.
 2. **Mantener WooCommerce al día:** Actualizar automáticamente los estados (ej. `completed`, `returned-cocex`) basándose en la información de Correos.
 3. **Mejorar la Atención al Cliente:** Enviar mensajes por Telegram con enlaces directos (`wa.me`) listos para notificar al cliente por WhatsApp con un solo clic.
+
+## Funcionamiento
+
+1. **Consulta de pedidos a WooCommerce:** El programa obtiene los pedidos en un estado específico (ej. 'prepared-cex'), cuyo número de seguimiento de Correos ya ha sido generado.
+2. **Scrapper inteligente a Correos:** Para cada número de seguimiento, se visita la web de seguimiento para verificar el estado real de cada paquete y poder actualizar y sincronizar el e-coomerce. Se usan diferentes *User-Agents* con pausas aleatorias para evitar posibles bloqueos.
+3. **Sistema de alertas por Telegram:** Usamos bots de Telegram para notificar eventos claves de los pedidos (Listo para entregar al transportista, En oficina, Devuelto, Atascado, No enviado).
+4. **Generación de enlaces de WhatsApp:** Pre-construye mensajes personalizados para el cliente listos para enviar desde Telegram.
+
+## Tecnologías empleadas
