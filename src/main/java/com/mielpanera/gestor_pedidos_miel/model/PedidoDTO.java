@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Date;
 import java.util.List;
 
-// Esta etiqueta indica que si vienen datos extra en el JSON del pedido que no haya definido, ignóralos, no lances error
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PedidoDTO {
     private int id;
@@ -29,7 +28,6 @@ public class PedidoDTO {
         this.lineItems = lineItems;
     }
 
-    // CONSTRUCTOR VACÍO (Necesario para Spring)
     public PedidoDTO() {}
 
     public int getId() {
@@ -161,17 +159,12 @@ public class PedidoDTO {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class MetaData {
         private String key;
-        // Usamos Object porque algunos plugins de WooCommerce guardan arrays o cosas complejas
-        // y si forzamos a String, Spring lanzará un error al mapearlo.
         private Object value;
-
         public String getKey() { return key; }
         public void setKey(String key) { this.key = key; }
-
         public Object getValue() { return value; }
         public void setValue(Object value) { this.value = value; }
 
-        // Método helper para convertir el valor a texto plano fácilmente
         public String getValueAsString() {
             return value != null ? value.toString() : "";
         }

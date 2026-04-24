@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 
 
-// Etiqueta que le dice a Spring que cargue esta clase en memoria al arrancar
 @Service
 public class WooCommerceService {
 
@@ -28,7 +27,6 @@ public class WooCommerceService {
     private final String CONSUMER_SECRET = System.getenv("WOO_CONSUMER_SECRET");
 
     public WooCommerceService(RestTemplateBuilder builder, ObjectMapper mapper) {
-        // Validación de que las variables de entorno están propiamente configuradas
         if (CONSUMER_KEY == null || CONSUMER_SECRET == null) {
             throw new IllegalStateException("FATAL: Las variables de entorno no están configuradas.");
         }
@@ -43,16 +41,6 @@ public class WooCommerceService {
         int page = 1;
         boolean hasMoreOrders = true;
 
-        /*
-        // La API de Woo está en /wp-json/wc/v3/orders
-        // Añadimos las claves en la URL (es la forma más fácil con Woo sobre HTTPS)
-        String urlFinal = STORE_URL + "/wp-json/wc/v3/orders?" +
-                "consumer_key=" + CONSUMER_KEY +
-                "&consumer_secret=" + CONSUMER_SECRET +
-                "&status=prepared-cocex";
-         */
-
-        // Headers de autenticación: formas más segura de acceder, ya que no añadimos las claves en la URL
         HttpHeaders headers = new HttpHeaders();
         headers.setBasicAuth(CONSUMER_KEY, CONSUMER_SECRET);
         HttpEntity<String> entity = new HttpEntity<>(headers);
@@ -67,7 +55,6 @@ public class WooCommerceService {
             try {
                 System.out.println("Consultado Woocommerce...");
 
-                // CAMBIO CLAVE: Usamos ParameterizedTypeReference para mantener el tipo de la Lista
                 ResponseEntity<List<PedidoDTO>> response = restTemplate.exchange(
                         urlFinal,
                         HttpMethod.GET,
@@ -90,7 +77,6 @@ public class WooCommerceService {
                     hasMoreOrders = false;
                 }
             } catch (Exception e) {
-                // Loguear el error es importante para saber si falla una página concreta
                 System.err.println("Error obteniendo página " + page + ": " + e.getMessage());
                 hasMoreOrders = false;
             }
@@ -131,9 +117,8 @@ public class WooCommerceService {
             return response.getBody();
 
         } catch (HttpClientErrorException e) {
-        // Manejo de errores específicos (ej: ID no existe devuelve 404)
         System.err.println("Error al actualizar el pedido " + order.getId() + ": " + e.getResponseBodyAsString());
-        throw e; // O devuelve null según tu lógica de negocio
+        throw e;
         }
     }
 
@@ -152,14 +137,11 @@ public class WooCommerceService {
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(noteData, headers);
 
         try {
-            // No necesitamos mapear la respuesta a un DTO complejo si solo queremos confirmar que se creó.
-            // Usamos Map.class para recibir la respuesta genérica.
             restTemplate.postForObject(url, entity, Map.class);
             System.out.println("Nota añadida correctamente al pedido " + order.getId());
 
         } catch (Exception e) {
             System.err.println("Error al añadir nota al pedido " + order.getId() + ": " + e.getMessage());
-            // Decidimos no lanzar excepción aquí para no interrumpir el flujo principal si la nota falla
         }
     }
 
@@ -172,7 +154,6 @@ public class WooCommerceService {
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
         try {
-            // 2. Usamos exchange con Map[].class porque la API devuelve un Array de JSON
             ResponseEntity<Map[]> response = restTemplate.exchange(
                     url,
                     HttpMethod.GET,
@@ -249,10 +230,9 @@ public class WooCommerceService {
                     url,
                     HttpMethod.GET,
                     entity,
-                    String.class // Pedimos que nos devuelva el cuerpo como String (JSON crudo)
+                    String.class
             );
 
-            //Convertimos el json que recibimos en un formato bonito para mostrarlo por consola
             Object jsonObject = objectMapper.readValue(response.getBody(), Object.class);
 
             String jsonLegible = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonObject);
@@ -301,9 +281,6 @@ public class WooCommerceService {
 
         return noteParsed.toString();
     }
-    /*
-    * Busca si la clave específica existe en los meta datos y si tiene valor "true" o "yes"
-    * */
     public boolean comprobarAccionMetaData(PedidoDTO order, String metaKey) {
         if (order.getMetaData() == null || order.getMetaData().isEmpty()) {
             return false; // Si no hay meta datos, no se ha hecho la acción
@@ -318,9 +295,6 @@ public class WooCommerceService {
         }
         return false;
     }
-    /*
-    * Hace llamada PUT a la API de Woocommerce para actualizar el meta dato
-    * */
     public void actualizarMetaData(PedidoDTO order, String metaKey, String metaValue) {
         String url = STORE_URL + "/wp-json/wc/v3/orders/" + order.getId();
 
@@ -328,7 +302,6 @@ public class WooCommerceService {
         headers.setBasicAuth(CONSUMER_KEY, CONSUMER_SECRET);
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        // La API de Woo espera un objeto JSON con una lista "meta_data" dentro
         List<Map<String, String>> metaDataList = new ArrayList<>();
         Map<String, String> metaDataEntry = new HashMap<>();
         metaDataEntry.put("key", metaKey);
@@ -349,7 +322,6 @@ public class WooCommerceService {
             );
             System.out.println("✅ Meta dato [" + metaKey + "=" + metaValue + "] guardado en WooCommerce.");
 
-            // Opcional: Actualizamos el objeto local en memoria para mantener coherencia
             PedidoDTO.MetaData nuevoMeta = new PedidoDTO.MetaData();
             nuevoMeta.setKey(metaKey);
             nuevoMeta.setValue(metaValue);
@@ -359,9 +331,7 @@ public class WooCommerceService {
             System.err.println("❌ Error guardando meta dato en pedido " + order.getId() + ": " + e.getMessage());
         }
     }
-    /*
-    * Imprime por consola los meta datos de un pedido
-    * */
+
     public void imprimirMetaDataVisual(PedidoDTO order) {
         System.out.println("\n=======================================================");
         System.out.println("📊 META DATOS DEL PEDIDO #" + order.getId());
@@ -373,7 +343,6 @@ public class WooCommerceService {
             System.out.printf(" %-35s | %s%n", "CLAVE (KEY)", "VALOR (VALUE)");
             System.out.println("-------------------------------------------------------");
             for (PedidoDTO.MetaData meta : order.getMetaData()) {
-                // Acortamos el valor si es excesivamente largo para no romper la tabla
                 String valorStr = meta.getValueAsString();
                 if (valorStr.length() > 50) {
                     valorStr = valorStr.substring(0, 47) + "...";

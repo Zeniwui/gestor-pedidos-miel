@@ -25,32 +25,6 @@ public class GestorPedidosMielApplication {
 	public CommandLineRunner demo(WooCommerceService wooService, CorreosScraperService correosScraperService, TelegramService telegramService) {
 		return (args) -> {
 
-
-			//PONER TODOS LOS PEDIDOS CON LA MARCA DE "YA AVISADO"
-/*			System.out.println("--- 🚀 INICIANDO MARCADO MASIVO DE PEDIDOS PREPARADOS ---");
-			List<PedidoDTO> pedidosPreparados = wooService.obtenerPedidos("prepared-cocex");
-			System.out.println("Se han encontrado " + pedidosPreparados.size() + " pedidos para actualizar.");
-			String claveTelegram = "_aviso_telegram_preparado";
-			for (PedidoDTO order : pedidosPreparados) {
-				boolean yaTieneMetaDato = wooService.comprobarAccionMetaData(order, claveTelegram);
-				if (!yaTieneMetaDato) {
-					System.out.println("Añadiendo marca de 'ya avisado' al pedido #" + order.getId() + "...");
-					wooService.actualizarMetaData(order, claveTelegram, "true");
-					wooService.imprimirMetaDataVisual(order);
-					try {
-						Thread.sleep(1000);
-					} catch (InterruptedException e) {
-						Thread.currentThread().interrupt();
-					}
-				} else {
-					System.out.println("El pedido #" + order.getId() + " ya tenía la marca. Saltando...");
-				}
-			}
-			System.out.println("--- ✅ MARCADO MASIVO FINALIZADO ---");
-			System.exit(0);*/
-
-
-
 			String claveTelegram = "_aviso_telegram_preparado";
 
 			System.out.println("--- REVISANDO PEDIDOS PREPARADOS ---");
@@ -85,8 +59,8 @@ public class GestorPedidosMielApplication {
 						order.getId(),
 						order.getBilling().getNombreCompleto(),
 						order.getTrackingNumber(),
-						info.fechaEvento(), // Fecha del último evento
-						diasSinMoverse,     // Días transcurridos
+						info.fechaEvento(),
+						diasSinMoverse,
 						info.estado()
 				);
 
@@ -116,7 +90,6 @@ public class GestorPedidosMielApplication {
 
 				// Pausa aleatoria entre peticiones
 				try {
-					// Genera un tiempo aleatorio entre 3 y 7 segundos (3000ms a 7000ms)
 					long sleepTime = 3000 + (long) (Math.random() * 4000);
 					System.out.println("⏳ Esperando " + (sleepTime / 1000.0) + " segundos antes de consultar el siguiente pedido...");
 					Thread.sleep(sleepTime);
@@ -128,7 +101,6 @@ public class GestorPedidosMielApplication {
 
 			System.out.println("------------------------ FINALIZADO -------------------------------");
 
-			//System.exit(0);
 		};
 	}
 

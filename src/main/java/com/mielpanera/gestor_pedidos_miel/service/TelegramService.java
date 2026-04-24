@@ -48,7 +48,6 @@ public class TelegramService {
     }
 
     public void notificarPedidoPreparado(PedidoDTO order) {
-        // 1. Extraemos datos básicos
         String phone = order.getBilling().getPhoneNumber();
         String nombre = order.getBilling().getFirstName();
         String trackingNumber = order.getTrackingNumber();
@@ -79,7 +78,6 @@ public class TelegramService {
                 "👇 <b>Pulsa aquí para enviar el tracking:</b>\n" +
                 "<a href=\"" + waLink + "\">📲 Enviar WhatsApp con Tracking</a>";
 
-        // 6. Enviamos a tu Telegram
         enviarMensajeTelegram(mensajeTelegram, tokenPreparados);
     }
 
@@ -158,9 +156,6 @@ public class TelegramService {
         enviarMensajeTelegram(mensaje, tokenAlertas);
     }
 
-    /**
-     * Recibe el token y el chatId correspondientes por parámetro
-     */
     public void enviarMensajeTelegram(String mensajeHtml, String token) {
         if (token == null || telegramChatID == null) {
             System.err.println("Error: Token o ChatID de Telegram no configurados.");

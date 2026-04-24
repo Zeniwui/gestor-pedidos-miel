@@ -20,3 +20,8 @@ El plugin de Correos integrado en nuestra página web Wordpress presentaba probl
 4. **Generación de enlaces de WhatsApp:** Pre-construye mensajes personalizados para el cliente listos para enviar desde Telegram.
 
 ## Tecnologías empleadas
+
+* **Java 17**
+* **Spring Boot 3.4.1** (Web, RestClient, RestTemplate)
+* **Jsoup 1.17.2** (Web Scraping)
+* **Jackson** (Parseo de JSON)

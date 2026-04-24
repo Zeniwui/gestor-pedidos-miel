@@ -16,8 +16,6 @@ import java.util.Random;
 
 @Service
 public class CorreosScraperService {
-
-    // Esta es la URL interna que usa la web de Correos (descubierta con F12)
     private static final String API_OCULTA_URL = "https://api1.correos.es/digital-services/searchengines/api/v1/envios?text={TRACKING}&language=ES";
     private static final DateTimeFormatter FORMATO_FECHA_CORREOS = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
@@ -34,7 +32,6 @@ public class CorreosScraperService {
 
     public CorreosInfo obtenerEstadoActual(String trackingId) {
         try {
-            // 1. Construimos la URL
             if (trackingId == null || trackingId.trim().isEmpty()) {
                 System.err.println("Error: Se ha intentado consultar un Tracking ID nulo o vacío.");
                 return new CorreosInfo("ID_INVALIDO", LocalDate.now());
@@ -46,23 +43,22 @@ public class CorreosScraperService {
 
             Connection.Response response = Jsoup.connect(url)
                     .ignoreContentType(true)
-                    .timeout(10000) // Darle 10 segundos por si acaso
+                    .timeout(10000)
                     .userAgent(userAgentAleatorio)
                     .header("Accept", "application/json, text/plain, */*")
                     .header("Accept-Language", "es-ES,es;q=0.9")
                     .header("Referer", "https://www.correos.es/")
                     .header("Origin", "https://www.correos.es")
-                    .header("Host", "api1.correos.es") // A veces ayuda ser explícito
+                    .header("Host", "api1.correos.es")
                     .header("Sec-Fetch-Dest", "empty")
                     .header("Sec-Fetch-Mode", "cors")
                     .header("Sec-Fetch-Site", "same-site")
                     .method(Connection.Method.GET)
                     .execute();
 
-            // 3. Obtenemos el cuerpo de la respuesta (el JSON)
             String jsonBody = response.body();
 
-/*            // --- DEBUGGING ---
+/*          // --- DEBUGGING ---
             System.out.println("--------------------------------------------------");
             System.out.println("JSON RAW CORREOS (" + trackingId + "):");
             System.out.println(jsonBody);
@@ -70,14 +66,12 @@ public class CorreosScraperService {
             // -------------------------------------------*/
 
 
-            // 4. Analizamos el JSON
             return extraerUltimoEstado(jsonBody);
 
         } catch (org.jsoup.HttpStatusException e) {
             if (e.getStatusCode() == 404) {
                 return new CorreosInfo("NOT_FOUND", LocalDate.now());
             } else if (e.getStatusCode() == 429 || e.getStatusCode() == 403) {
-                // --- Detectamos el bloqueo de Correos ---
                 System.err.println("🚨 BLOQUEO DETECTADO por Correos (HTTP " + e.getStatusCode() + ")");
                 return new CorreosInfo("BLOQUEO_IP", LocalDate.now());
             }
@@ -93,14 +87,11 @@ public class CorreosScraperService {
             ObjectMapper mapper = new ObjectMapper();
             JsonNode root = mapper.readTree(json);
 
-            // Entramos en la lista "shipment"
             JsonNode shipmentArray = root.get("shipment");
 
             if (shipmentArray != null && !shipmentArray.isEmpty()) {
-                // Cogemos el primer envío
                 JsonNode firstEntry = shipmentArray.get(0);
 
-                // Buscamos la lista "events" dentro del envio
                 JsonNode eventsArray = firstEntry.get("events");
 
                 String estadoTexto = "DESCONOCIDO";
@@ -115,10 +106,9 @@ public class CorreosScraperService {
                         estadoTexto = lastEvent.get("desPhase").asText();
                     }
 
-                    // B) Extraer la FECHA
-                    LocalDate fechaEvento = LocalDate.now(); // Por defecto hoy si falla
+                    LocalDate fechaEvento = LocalDate.now();
                     if (lastEvent.has("eventDate")) {
-                        String fechaStr = lastEvent.get("eventDate").asText(); // "16/01/2026"
+                        String fechaStr = lastEvent.get("eventDate").asText();
                         try {
                             fechaEvento = LocalDate.parse(fechaStr, FORMATO_FECHA_CORREOS);
                         } catch (Exception e) {
