@@ -3,8 +3,8 @@ name: Ejecutar Gestor de Pedidos Miel diariamente
 on:
   schedule:
     # 14:00 UTC equivale a las 16:00 en Madrid (horario de verano CEST)
-    # 10:00 UTC equivale a las 12 en Madrid (horario de verano CEST)
-    - cron: '0 10 * * *'
+    # 9:00 UTC equivale a las 11 en Madrid (horario de verano CEST)
+    - cron: '0 9 * * *'
   workflow_dispatch:
 
 jobs:

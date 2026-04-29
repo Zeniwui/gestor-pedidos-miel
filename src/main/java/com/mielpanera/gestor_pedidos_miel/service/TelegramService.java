@@ -22,8 +22,8 @@ public class TelegramService {
     private final String TELEFONOOFICIAL = System.getenv("TELEFONO_OFICIAL");
     private final RestClient restClient;
 
-    public TelegramService(RestClient restClient) {
-        this.restClient = restClient;
+    public TelegramService(RestClient.Builder restClientBuilder) {
+        this.restClient = restClientBuilder.build();
     }
 
     public void notificarPedidoEntregado(PedidoDTO order) {

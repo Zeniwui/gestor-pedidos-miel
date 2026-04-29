@@ -30,6 +30,7 @@ public class GestorPedidosMielApplication {
 			System.out.println("--- REVISANDO PEDIDOS PREPARADOS ---");
 			List<PedidoDTO> ordersPreparedCocex = wooService.obtenerPedidos("prepared-cocex");
 
+
 			for (PedidoDTO order: ordersPreparedCocex) {
 
 				boolean yaAvisado = wooService.comprobarAccionMetaData(order, claveTelegram);
@@ -42,6 +43,7 @@ public class GestorPedidosMielApplication {
 					telegramService.notificarPedidoPreparado(order);
 					continue;
 				}
+
 
 				CorreosInfo info = correosScraperService.obtenerEstadoActual(order.getTrackingNumber());
 
