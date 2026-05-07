@@ -4,7 +4,7 @@ on:
   schedule:
     # 14:00 UTC equivale a las 16:00 en Madrid (horario de verano CEST)
     # 9:00 UTC equivale a las 11 en Madrid (horario de verano CEST)
-    - cron: '0 8 * * *'
+    - cron: '0 7 * * *'
   workflow_dispatch:
 
 jobs:

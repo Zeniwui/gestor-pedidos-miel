@@ -11,9 +11,11 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 
 @Service
@@ -26,6 +28,14 @@ public class WooCommerceService {
     private final String CONSUMER_KEY = System.getenv("WOO_CONSUMER_KEY");
     private final String CONSUMER_SECRET = System.getenv("WOO_CONSUMER_SECRET");
 
+    private static final List<String> USER_AGENTS = Arrays.asList(
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_3_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3 Safari/605.1.15",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"
+    );
+    private static final Random RANDOM = new Random();
+
     public WooCommerceService(RestTemplateBuilder builder, ObjectMapper mapper) {
         if (CONSUMER_KEY == null || CONSUMER_SECRET == null) {
             throw new IllegalStateException("FATAL: Las variables de entorno no están configuradas.");
@@ -35,15 +45,27 @@ public class WooCommerceService {
         this.objectMapper = mapper;
     }
 
+    private HttpHeaders crearHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBasicAuth(CONSUMER_KEY, CONSUMER_SECRET);
+        headers.set("User-Agent", USER_AGENTS.get(RANDOM.nextInt(USER_AGENTS.size())));
+        headers.set("Accept", "application/json, text/plain, */*");
+        headers.set("Accept-Language", "es-ES,es;q=0.9");
+        headers.set("Referer", STORE_URL);
+        headers.set("Origin", STORE_URL);
+        headers.set("Sec-Fetch-Dest", "empty");
+        headers.set("Sec-Fetch-Mode", "cors");
+        headers.set("Sec-Fetch-Site", "same-origin");
+        return headers;
+    }
+
     public List<PedidoDTO> obtenerPedidos(String status) {
 
         List<PedidoDTO> allOrders = new ArrayList<>();
         int page = 1;
         boolean hasMoreOrders = true;
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBasicAuth(CONSUMER_KEY, CONSUMER_SECRET);
-        HttpEntity<String> entity = new HttpEntity<>(headers);
+        HttpEntity<String> entity = new HttpEntity<>(crearHeaders());
 
         while (hasMoreOrders) {
             String urlFinal = UriComponentsBuilder.fromHttpUrl(STORE_URL + "/wp-json/wc/v3/orders")
@@ -93,8 +115,7 @@ public class WooCommerceService {
 
         String url = STORE_URL + "/wp-json/wc/v3/orders/" + order.getId();
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBasicAuth(CONSUMER_KEY, CONSUMER_SECRET);
+        HttpHeaders headers = crearHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         Map<String, String> requestBody = new HashMap<>();
@@ -126,8 +147,7 @@ public class WooCommerceService {
 
         String url = STORE_URL + "/wp-json/wc/v3/orders/" + order.getId() + "/notes";
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBasicAuth(CONSUMER_KEY, CONSUMER_SECRET);
+        HttpHeaders headers = crearHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         Map<String, Object> noteData = new HashMap<>();
@@ -149,15 +169,11 @@ public class WooCommerceService {
 
         String url = STORE_URL + "/wp-json/wc/v3/orders/" + order.getId() + "/notes?per_page=100";
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBasicAuth(CONSUMER_KEY, CONSUMER_SECRET);
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-
         try {
             ResponseEntity<Map[]> response = restTemplate.exchange(
                     url,
                     HttpMethod.GET,
-                    entity,
+                    new HttpEntity<>(crearHeaders()),
                     Map[].class
             );
 
@@ -193,8 +209,7 @@ public class WooCommerceService {
 
             String url = STORE_URL + "/wp-json/wc/v3/orders/" + order.getId();
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setBasicAuth(CONSUMER_KEY, CONSUMER_SECRET);
+            HttpHeaders headers = crearHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
 
             Map<String, Object> noteData = new HashMap<>();
@@ -221,15 +236,11 @@ public class WooCommerceService {
     public void getOrderJson(int orderID) {
         String url = STORE_URL + "/wp-json/wc/v3/orders/" + orderID;
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBasicAuth(CONSUMER_KEY, CONSUMER_SECRET);
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-
         try {
             ResponseEntity<String> response = restTemplate.exchange(
                     url,
                     HttpMethod.GET,
-                    entity,
+                    new HttpEntity<>(crearHeaders()),
                     String.class
             );
 
@@ -298,8 +309,7 @@ public class WooCommerceService {
     public void actualizarMetaData(PedidoDTO order, String metaKey, String metaValue) {
         String url = STORE_URL + "/wp-json/wc/v3/orders/" + order.getId();
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBasicAuth(CONSUMER_KEY, CONSUMER_SECRET);
+        HttpHeaders headers = crearHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         List<Map<String, String>> metaDataList = new ArrayList<>();
