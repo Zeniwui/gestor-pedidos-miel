@@ -2,10 +2,18 @@ package com.mielpanera.gestor_pedidos_miel.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 import java.util.Date;
 import java.util.List;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PedidoDTO {
     private int id;
@@ -13,70 +21,22 @@ public class PedidoDTO {
     private String status;
     private Date date_created;
     private Billing billing;
+    
     @JsonProperty("correos_tracking_number")
     private String trackingNumber;
+    
     @JsonProperty("customer_note")
     private String customerNote;
+    
     @JsonProperty("line_items")
     private List<LineProduct> lineItems;
+    
     @JsonProperty("meta_data")
     private List<MetaData> metaData;
-    public List<LineProduct> getLineItems() {
-        return lineItems;
-    }
-    public void setLineItems(List<LineProduct> lineItems) {
-        this.lineItems = lineItems;
-    }
-
-    public PedidoDTO() {}
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public int getNumber() {
-        return number;
-    }
-
-    public void setNumber(int number) {
-        this.number = number;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public Date getDate_created() {
-        return date_created;
-    }
-
-    public void setDate_created(Date date_created) {
-        this.date_created = date_created;
-    }
-
-    public Billing getBilling() { return billing; }
-    public void setBilling(Billing billing) { this.billing = billing; }
-
-    public String getTrackingNumber() { return trackingNumber; }
-    public void setTrackingNumber(String trackingNumber) { this.trackingNumber = trackingNumber; }
-
-    public String getCustomerNote() { return customerNote; }
-    public void setCustomerNote(String note) { this.customerNote = note; }
-    public List<MetaData> getMetaData() { return metaData; }
-    public void setMetaData(List<MetaData> metaData) { this.metaData = metaData; }
 
     @Override
     public String toString() {
         String nombreCliente = (billing != null) ? billing.getNombreCompleto() : "Desconocido";
-
         String infoSeguimiento = (trackingNumber != null) ? trackingNumber : "Sin asignar";
 
         return "Pedido #" + id +
@@ -85,6 +45,10 @@ public class PedidoDTO {
                 " | Tracking: " + infoSeguimiento;
     }
 
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Billing {
         @JsonProperty("first_name")
@@ -95,75 +59,34 @@ public class PedidoDTO {
         @JsonProperty("phone")
         private String phoneNumber;
 
-        public String getFirstName() {
-            return firstName;
-        }
-        public void setFirstName(String firstName) {
-            this.firstName = firstName;
-        }
-
-        public String getLastName() {
-            return lastName;
-        }
-        public void setLastName(String lastName) {
-            this.lastName = lastName;
-        }
-
-        public String getPhoneNumber() { return phoneNumber; }
-        public void setPhoneNumber(String newPhone) { this.phoneNumber = newPhone; }
-
         public String getNombreCompleto() {
-            // Manejo seguro por si vienen nulos
             String nombre = (firstName != null) ? firstName : "";
             String apellido = (lastName != null) ? lastName : "";
             return (nombre + " " + apellido).trim();
         }
     }
 
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class LineProduct {
         private int id;
         @JsonProperty("product_id")
         private int productID;
         private String name;
         private int quantity;
-
-        public int getId() {
-            return id;
-        }
-
-        public void setId(int id) {
-            this.id = id;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public int getQuantity() {
-            return quantity;
-        }
-
-        public void setQuantity(int quantity) {
-            this.quantity = quantity;
-        }
-
-        public int getProductID() { return productID; }
-        public void setProductID(int id) { this.productID = id; }
-
     }
 
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class MetaData {
         private String key;
         private Object value;
-        public String getKey() { return key; }
-        public void setKey(String key) { this.key = key; }
-        public Object getValue() { return value; }
-        public void setValue(Object value) { this.value = value; }
 
         public String getValueAsString() {
             return value != null ? value.toString() : "";
