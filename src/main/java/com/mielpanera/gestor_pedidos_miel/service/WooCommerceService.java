@@ -24,7 +24,7 @@ public class WooCommerceService {
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
-    private final String STORE_URL = System.getenv("STORE_URL");
+    private final String STORE_URL;
     private final String CONSUMER_KEY = System.getenv("WOO_CONSUMER_KEY");
     private final String CONSUMER_SECRET = System.getenv("WOO_CONSUMER_SECRET");
 
@@ -37,10 +37,13 @@ public class WooCommerceService {
     private static final Random RANDOM = new Random();
 
     public WooCommerceService(RestTemplateBuilder builder, ObjectMapper mapper) {
-        if (CONSUMER_KEY == null || CONSUMER_SECRET == null) {
-            throw new IllegalStateException("FATAL: Las variables de entorno no están configuradas.");
+        String rawStoreUrl = System.getenv("STORE_URL");
+        if (rawStoreUrl == null || CONSUMER_KEY == null || CONSUMER_SECRET == null) {
+            throw new IllegalStateException("FATAL: Las variables de entorno de WooCommerce no están correctamente configuradas (STORE_URL, WOO_CONSUMER_KEY o WOO_CONSUMER_SECRET).");
         }
 
+        // Normalizar URL (quitar barra diagonal al final si existe)
+        this.STORE_URL = rawStoreUrl.endsWith("/") ? rawStoreUrl.substring(0, rawStoreUrl.length() - 1) : rawStoreUrl;
         this.restTemplate = builder.build();
         this.objectMapper = mapper;
     }
@@ -68,14 +71,14 @@ public class WooCommerceService {
         HttpEntity<String> entity = new HttpEntity<>(crearHeaders());
 
         while (hasMoreOrders) {
-            String urlFinal = UriComponentsBuilder.fromHttpUrl(STORE_URL + "/wp-json/wc/v3/orders")
-                    .queryParam("status", status)
-                    .queryParam("per_page", 100)
-                    .queryParam("page", page)
-                    .toUriString();
-
             try {
-                System.out.println("Consultado Woocommerce...");
+                String urlFinal = UriComponentsBuilder.fromHttpUrl(STORE_URL + "/wp-json/wc/v3/orders")
+                        .queryParam("status", status)
+                        .queryParam("per_page", 100)
+                        .queryParam("page", page)
+                        .toUriString();
+
+                System.out.println("Consultando Woocommerce (Página " + page + ")...");
 
                 ResponseEntity<List<PedidoDTO>> response = restTemplate.exchange(
                         urlFinal,
@@ -100,11 +103,14 @@ public class WooCommerceService {
                 }
             } catch (Exception e) {
                 System.err.println("Error obteniendo página " + page + ": " + e.getMessage());
+                if (page == 1) {
+                    throw new RuntimeException("Error fatal en la primera petición a WooCommerce: " + e.getMessage(), e);
+                }
                 hasMoreOrders = false;
             }
         }
 
-        System.out.println("Número de pedidos en estado: prepared-cocex: " + allOrders.size());
+        System.out.println("Número de pedidos en estado " + status + ": " + allOrders.size());
 
         return allOrders;
     }
